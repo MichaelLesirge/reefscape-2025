@@ -458,19 +458,6 @@
             },
             "children": [
               {
-                "title": "Aim At Tag",
-                "x": 960.0,
-                "y": 384.0,
-                "width": 256.0,
-                "height": 128.0,
-                "type": "Command",
-                "properties": {
-                  "topic": "/SmartDashboard/Aim At Tag",
-                  "period": 0.06,
-                  "show_type": false
-                }
-              },
-              {
                 "title": "Follow Tag",
                 "x": 960.0,
                 "y": 448.0,
@@ -479,6 +466,19 @@
                 "type": "Command",
                 "properties": {
                   "topic": "/SmartDashboard/Follow Tag",
+                  "period": 0.06,
+                  "show_type": false
+                }
+              },
+              {
+                "title": "Aim At Tag",
+                "x": 960.0,
+                "y": 384.0,
+                "width": 256.0,
+                "height": 128.0,
+                "type": "Command",
+                "properties": {
+                  "topic": "/SmartDashboard/Aim At Tag",
                   "period": 0.06,
                   "show_type": false
                 }
@@ -497,19 +497,6 @@
             },
             "children": [
               {
-                "title": "Follow Tag Superstructure",
-                "x": 1024.0,
-                "y": 512.0,
-                "width": 256.0,
-                "height": 128.0,
-                "type": "Command",
-                "properties": {
-                  "topic": "/SmartDashboard/Follow Tag Superstructure",
-                  "period": 0.06,
-                  "show_type": false
-                }
-              },
-              {
                 "title": "Aim At Tag Superstructure",
                 "x": 960.0,
                 "y": 384.0,
@@ -518,6 +505,19 @@
                 "type": "Command",
                 "properties": {
                   "topic": "/SmartDashboard/Aim At Tag Superstructure",
+                  "period": 0.06,
+                  "show_type": false
+                }
+              },
+              {
+                "title": "Follow Tag Superstructure",
+                "x": 1024.0,
+                "y": 512.0,
+                "width": 256.0,
+                "height": 128.0,
+                "type": "Command",
+                "properties": {
+                  "topic": "/SmartDashboard/Follow Tag Superstructure",
                   "period": 0.06,
                   "show_type": false
                 }
@@ -549,7 +549,6 @@
               "topic": "/CameraPublisher/FrontRight8032-processed",
               "period": 0.06,
               "rotation_turns": 0,
-              "compression": 12,
               "resolution": [
                 0.0,
                 0.0
@@ -566,8 +565,7 @@
             "properties": {
               "topic": "/CameraPublisher/BackRightCamera8032-processed",
               "period": 0.06,
-              "rotation_turns": 0,
-              "compression": 7
+              "rotation_turns": 0
             }
           },
           {
@@ -580,7 +578,8 @@
             "properties": {
               "topic": "/CameraPublisher/jarreaucam-processed",
               "period": 0.06,
-              "rotation_turns": 0
+              "rotation_turns": 0,
+              "compression": 10
             }
           },
           {
@@ -593,7 +592,8 @@
             "properties": {
               "topic": "/CameraPublisher/plzwork-processed",
               "period": 0.06,
-              "rotation_turns": 0
+              "rotation_turns": 0,
+              "compression": 3
             }
           },
           {

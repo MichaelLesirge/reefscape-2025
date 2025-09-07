@@ -13,10 +13,10 @@
             "/Tuning",
             "/RealOutputs/HeadingController",
             "/Tuning/HeadingController",
-            "/RealOutputs/TagFollowing",
             "/RealOutputs/TagFollowing/Follow/TagFilteredPosition/translation",
             "/RealOutputs/TagFollowing/Follow",
-            "/RealOutputs/TagFollowing/Aim"
+            "/RealOutputs/TagFollowing/Aim",
+            "/RealOutputs/SimControlledTarget"
           ]
         },
         "tabs": {
@@ -140,7 +140,7 @@
                     "logType": "Pose3d",
                     "visible": true,
                     "options": {
-                      "variant": "Coral"
+                      "variant": "None"
                     }
                   },
                   {
@@ -149,7 +149,7 @@
                     "logType": "Pose3d[]",
                     "visible": true,
                     "options": {
-                      "variant": "Coral"
+                      "variant": "None"
                     }
                   },
                   {
@@ -178,9 +178,25 @@
                     "logType": "Pose3d",
                     "visible": true,
                     "options": {}
+                  },
+                  {
+                    "type": "aprilTag",
+                    "logKey": "/RealOutputs/SimControlledTarget/TagPose",
+                    "logType": "Pose3d",
+                    "visible": true,
+                    "options": {
+                      "family": "36h11"
+                    }
+                  },
+                  {
+                    "type": "axes",
+                    "logKey": "/RealOutputs/SimControlledTarget/TagPose",
+                    "logType": "Pose3d",
+                    "visible": true,
+                    "options": {}
                   }
                 ],
-                "game": "2025 Field (Welded)",
+                "game": "Evergreen",
                 "origin": "blue"
               },
               "controllerUUID": "e8hgomb1yslv0cwpvfxkohzvzsz5j7n2",
@@ -188,14 +204,14 @@
                 "cameraIndex": -1,
                 "orbitFov": 50,
                 "cameraPosition": [
-                  4.829292417745876,
-                  2.0157745081750478,
-                  3.6146992009242047
+                  6.8504129765938755,
+                  1.1654903692161722,
+                  1.0900769543693456
                 ],
                 "cameraTarget": [
-                  6.249181254912597,
-                  -0.028989147914892387,
-                  0.6494633748503841
+                  5.8685323017477495,
+                  0.5374286731140911,
+                  -1.1879259148248789
                 ]
               },
               "controlsHeight": 305
