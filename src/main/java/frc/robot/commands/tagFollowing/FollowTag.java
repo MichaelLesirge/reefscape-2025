@@ -1,0 +1,132 @@
+package frc.robot.commands.tagFollowing;
+
+import edu.wpi.first.math.MathUtil;
+import edu.wpi.first.math.geometry.Pose2d;
+import edu.wpi.first.math.geometry.Pose3d;
+import edu.wpi.first.math.geometry.Rotation2d;
+import edu.wpi.first.math.geometry.Transform2d;
+import edu.wpi.first.math.geometry.Translation2d;
+import edu.wpi.first.math.geometry.Translation3d;
+import edu.wpi.first.math.kinematics.ChassisSpeeds;
+import edu.wpi.first.math.util.Units;
+import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
+import edu.wpi.first.wpilibj2.command.Command;
+import frc.robot.Constants;
+import frc.robot.commands.controllers.SimpleDriveController;
+import frc.robot.subsystems.drive.Drive;
+import frc.robot.subsystems.vision.AprilTagVision;
+import java.util.function.IntSupplier;
+import org.littletonrobotics.junction.Logger;
+
+public class FollowTag extends Command {
+
+  private static final Rotation2d TARGET_HEADING_OFFSET = Rotation2d.k180deg;
+  private static final Translation2d TARGET_OFFSET = new Translation2d(2, 0);
+  private static final Pose2d TOLERANCE =
+      new Pose2d(Units.inchesToMeters(6), Units.inchesToMeters(3), Rotation2d.fromDegrees(6));
+
+  private static final double FILTER_SLEW_RATE = Units.feetToMeters(5);
+  private static final double MAX_TAG_JUMP = Units.feetToMeters(1);
+
+  private final Drive drive;
+  private final AprilTagVision vision;
+
+  private final IntSupplier tagToFollow;
+
+  private final SimpleDriveController controller;
+
+  private Translation3d tagFilteredPosition = Translation3d.kZero;
+
+  public FollowTag(AprilTagVision vision, Drive drive, IntSupplier tagToFollow) {
+    this.vision = vision;
+    this.drive = drive;
+    this.tagToFollow = tagToFollow;
+
+    this.controller = new SimpleDriveController();
+
+    controller.setTolerance(TOLERANCE);
+
+    addRequirements(drive);
+  }
+
+  @Override
+  public void initialize() {
+    Pose2d robotPose = drive.getRobotPose();
+
+    controller.reset(robotPose);
+    controller.setSetpoint(robotPose);
+
+    this.tagFilteredPosition = TagFollowingUtil.toPose3d(robotPose).getTranslation();
+  }
+
+  @Override
+  public void execute() {
+    vision
+        .getTransformToTag(tagToFollow.getAsInt())
+        .ifPresent(
+            t -> {
+              Pose3d robotPose = TagFollowingUtil.toPose3d(drive.getRobotPose());
+
+              Pose3d cameraPose = robotPose.plus(t.robotToCamera());
+
+              Pose3d tagPose = cameraPose.plus(t.cameraToTarget());
+
+              tagFilteredPosition =
+                  MathUtil.slewRateLimit(
+                      tagFilteredPosition,
+                      tagPose.getTranslation(),
+                      Constants.LOOP_PERIOD_SECONDS,
+                      FILTER_SLEW_RATE);
+
+              Rotation2d targetRotation =
+                  tagPose
+                      .getRotation()
+                      .toRotation2d()
+                      .plus(Rotation2d.k180deg)
+                      .plus(TARGET_HEADING_OFFSET);
+
+              Translation2d targetTranslation =
+                  tagPose
+                      .toPose2d()
+                      .plus(new Transform2d(TARGET_OFFSET, Rotation2d.kZero))
+                      .getTranslation();
+
+              Logger.recordOutput("TagFollowing/FollowedTag", tagPose);
+              Logger.recordOutput("TagFollowing/UsedCamera", cameraPose);
+
+              SmartDashboard.putNumber(
+                  "Target Heading", ((-targetRotation.getDegrees() + 360) % 360));
+
+              Pose2d target = new Pose2d(targetTranslation, targetRotation);
+
+              double distance = tagFilteredPosition.getDistance(tagPose.getTranslation());
+              boolean withinMaxJump = distance < MAX_TAG_JUMP;
+
+              Logger.recordOutput("TagFollowing/Follow/TagDistanceToSafe", distance);
+              Logger.recordOutput("TagFollowing/Follow/WithinMaxJump", withinMaxJump);
+              Logger.recordOutput(
+                  "TagFollowing/Follow/TagFilteredPosition",
+                  new Pose3d(this.tagFilteredPosition, tagPose.getRotation()));
+
+              if (withinMaxJump) {
+                controller.setSetpoint(target);
+              }
+            });
+
+    ChassisSpeeds speeds = controller.calculate(drive.getRobotPose());
+    if (controller.atReference()) {
+      speeds = new ChassisSpeeds(0, 0, 0);
+    }
+    drive.setRobotSpeeds(speeds);
+  }
+
+  @Override
+  public boolean isFinished() {
+    return false;
+  }
+
+  @Override
+  public void end(boolean interrupted) {
+    drive.stop();
+  }
+}

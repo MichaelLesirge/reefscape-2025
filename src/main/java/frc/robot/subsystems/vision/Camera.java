@@ -5,6 +5,7 @@ import edu.wpi.first.math.Matrix;
 import edu.wpi.first.math.VecBuilder;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Pose3d;
+import edu.wpi.first.math.geometry.Transform3d;
 import edu.wpi.first.math.numbers.N1;
 import edu.wpi.first.math.numbers.N3;
 import edu.wpi.first.math.util.Units;
@@ -13,6 +14,7 @@ import frc.robot.utility.tunable.LoggedTunableNumber;
 import frc.robot.utility.tunable.LoggedTunableNumberFactory;
 import java.util.Arrays;
 import java.util.DoubleSummaryStatistics;
+import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import java.util.function.Supplier;
@@ -128,6 +130,10 @@ public class Camera {
     return results;
   }
 
+  public List<TrackedTarget> getLatestTargets() {
+    return io.getLatestTargets();
+  }
+
   private Pose3d[] getTagPositionsOnField(int[] tagsUsed) {
     return Arrays.stream(tagsUsed)
         .mapToObj(VisionConstants.FIELD::getTagPose)
@@ -225,6 +231,13 @@ public class Camera {
     }
 
     return VisionResultStatus.SUCCESSFUL;
+  }
+
+  public record TrackedTarget(
+      int id, Transform3d cameraToTarget, Transform3d robotToCamera, double poseAmbiguity) {
+    public boolean isGoodPoseAmbiguity() {
+      return poseAmbiguity < 0.2;
+    }
   }
 
   public enum VisionResultStatus {

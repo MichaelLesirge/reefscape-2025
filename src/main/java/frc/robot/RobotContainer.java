@@ -9,6 +9,7 @@ import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Transform2d;
 import edu.wpi.first.math.geometry.Translation2d;
+import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.math.util.Units;
 import edu.wpi.first.wpilibj.Alert;
 import edu.wpi.first.wpilibj.Alert.AlertType;
@@ -29,6 +30,8 @@ import frc.robot.commands.DriveCommands;
 import frc.robot.commands.ManualAlignCommands;
 import frc.robot.commands.controllers.JoystickInputController;
 import frc.robot.commands.controllers.SpeedLevelController;
+import frc.robot.commands.tagFollowing.AimAtTag;
+import frc.robot.commands.tagFollowing.FollowTag;
 import frc.robot.subsystems.dashboard.DriverDashboard;
 import frc.robot.subsystems.drive.Drive;
 import frc.robot.subsystems.drive.DriveConstants;
@@ -80,6 +83,7 @@ import java.util.Set;
 import java.util.function.BiConsumer;
 import java.util.function.DoubleSupplier;
 import java.util.function.Function;
+import java.util.function.IntSupplier;
 import org.littletonrobotics.junction.networktables.LoggedDashboardChooser;
 
 /**
@@ -140,6 +144,8 @@ public class RobotContainer {
       new Alert(
           "Running with test plans enabled, ensure you are using the correct auto.",
           AlertType.kWarning);
+  private static final Alert visionTestingMode =
+      new Alert("Vision demo testing mode active.", AlertType.kWarning);
 
   /** The container for the robot. Contains subsystems, IO devices, and commands. */
   public RobotContainer() {
@@ -233,15 +239,17 @@ public class RobotContainer {
 
     // Vision setup
     // vision.setLastRobotPoseSupplier(drive::getRobotPose);
-    vision.addVisionEstimateConsumer(
-        (estimate) -> {
-          if (estimate.status().isSuccess() && Constants.getMode() != Mode.SIM) {
-            drive.addVisionMeasurement(
-                estimate.robotPose().toPose2d(),
-                estimate.timestampSeconds(),
-                estimate.standardDeviations());
-          }
-        });
+    if (!Constants.VISION_DEMO_TESTING_MODE) {
+      vision.addVisionEstimateConsumer(
+          (estimate) -> {
+            if (estimate.isSuccess() && Constants.getMode() != Mode.SIM) {
+              drive.addVisionMeasurement(
+                  estimate.robotPose().toPose2d(),
+                  estimate.timestampSeconds(),
+                  estimate.standardDeviations());
+            }
+          });
+    }
 
     coralSimulator = new ObjectVisualizer("Coral", drive::getRobotPose, superstructure::getEndPose);
 
@@ -260,6 +268,7 @@ public class RobotContainer {
     tuningModeActiveAlert.set(Constants.TUNING_MODE);
     testPlansAvailable.set(Constants.RUNNING_TEST_PLANS);
     notPrimaryBotAlert.set(Constants.getRobot() != Constants.PRIMARY_ROBOT_TYPE);
+    visionTestingMode.set(Constants.VISION_DEMO_TESTING_MODE);
 
     // Hide controller missing warnings for sim
     DriverStation.silenceJoystickConnectionWarning(Constants.getMode() != Mode.REAL);
@@ -282,7 +291,7 @@ public class RobotContainer {
 
     dashboard.setAutoAlignPoseSupplier(AdaptiveAutoAlignCommands::getCurrentAutoAlignGoal);
 
-    dashboard.setHasVisionEstimateSupplier(vision::hasVisionEstimate, 0.1);
+    dashboard.setHasVisionEstimateSupplier(vision::hasVisionEstimateDebounce);
 
     dashboard.setSensorSuppliers(
         coralIntake::usingSensor, () -> coralIntake.hasCoral().orElse(false));
@@ -306,6 +315,28 @@ public class RobotContainer {
                     new Transform2d(
                         DRIVE_CONFIG.bumperCornerToCorner().getX() / 2, 0, Rotation2d.kPi))),
         true);
+
+    if (Constants.VISION_DEMO_TESTING_MODE) {
+      final String tagToFollowKey = "Tag To Follow";
+      final int tagToFollowDefault = 1;
+
+      SmartDashboard.putNumber(tagToFollowKey, tagToFollowDefault);
+      IntSupplier tagToFollow =
+          () -> (int) SmartDashboard.getNumber(tagToFollowKey, tagToFollowDefault);
+
+      dashboard.setHasVisionEstimateSupplier(
+          () -> vision.getTransformToTag(tagToFollow.getAsInt()).isPresent());
+
+      dashboard.addCommand(
+          "Aim At Tag",
+          new AimAtTag(vision, drive, tagToFollow)
+              .raceWith(ledSubsystem.runPattern(LEDConstants.FixedPalettePattern.Strobe.WHITE)));
+
+      dashboard.addCommand(
+          "Follow Tag",
+          new FollowTag(vision, drive, tagToFollow)
+              .raceWith(ledSubsystem.runPattern(LEDConstants.FixedPalettePattern.Strobe.GOLD)));
+    }
   }
 
   public void updateAlerts() {
@@ -321,13 +352,14 @@ public class RobotContainer {
   /** Define button->command mappings. */
   private void configureControllerBindings() {
     CommandScheduler.getInstance().getActiveButtonLoop().clear();
-    configureDriverControllerBindings(driverController, true);
+    configureDriverControllerBindings(
+        driverController, !Constants.VISION_DEMO_TESTING_MODE, !Constants.VISION_DEMO_TESTING_MODE);
     configureOperatorControllerBindings(operatorController, false);
     configureAlertTriggers();
   }
 
   private void configureDriverControllerBindings(
-      CommandXboxController xbox, boolean includeAutoAlign) {
+      CommandXboxController xbox, boolean includeAutoAlign, boolean includePovAlignment) {
     final Trigger useFieldRelative =
         new Trigger(new OverrideSwitch(xbox.y(), OverrideSwitch.Mode.TOGGLE, true));
 
@@ -383,6 +415,10 @@ public class RobotContainer {
         .or(RobotModeTriggers.disabled())
         .onTrue(drive.runOnce(drive::stop).withName("CANCEL and stop"));
 
+    xbox.b()
+        .debounce(1)
+        .whileTrue(drive.run(drive::stopUsingForwardArrangement).withName("ORIENT and stop"));
+
     // Reset the gyro heading
     xbox.start()
         .debounce(0.3)
@@ -403,12 +439,23 @@ public class RobotContainer {
           trigger.onTrue(command.until(() -> input.getOmegaRadiansPerSecond() != 0));
         };
 
-    configureAlignmentAuto.accept(
-        xbox.povRight(), ManualAlignCommands.alignToSourceRight(drive, input));
-    configureAlignmentAuto.accept(
-        xbox.povLeft(), ManualAlignCommands.alignToSourceLeft(drive, input));
-    configureAlignmentAuto.accept(xbox.povDown(), ManualAlignCommands.alignToCageAdv(drive, input));
-    configureAlignmentAuto.accept(xbox.povUp(), ManualAlignCommands.alignToReef(drive, input));
+    if (includePovAlignment) {
+      configureAlignmentAuto.accept(
+          xbox.povRight(), ManualAlignCommands.alignToSourceRight(drive, input));
+      configureAlignmentAuto.accept(
+          xbox.povLeft(), ManualAlignCommands.alignToSourceLeft(drive, input));
+      configureAlignmentAuto.accept(
+          xbox.povDown(), ManualAlignCommands.alignToCageAdv(drive, input));
+      configureAlignmentAuto.accept(xbox.povUp(), ManualAlignCommands.alignToReef(drive, input));
+    } else {
+      double speed = 1;
+      for (int pov = 0; pov < 360; pov += 90) {
+        final Translation2d translation = new Translation2d(speed, Rotation2d.fromDegrees(-pov));
+        final ChassisSpeeds speeds = new ChassisSpeeds(translation.getX(), translation.getY(), 0);
+        xbox.pov(pov)
+            .whileTrue(drive.run(() -> drive.setRobotSpeeds(speeds)).withName("Drive POV " + pov));
+      }
+    }
 
     if (includeAutoAlign) {
       // Align to reef
@@ -467,6 +514,9 @@ public class RobotContainer {
               CustomCommands.reInitCommand(
                   intakeAlignmentCommands.driveToPrevious(drive).withName("Align INTAKE -1")));
     }
+
+    AimAtTag.drivingTranslationSupplier = input::getTranslationMetersPerSecond;
+    AimAtTag.fieldRelativeDrivingSupplier = useFieldRelative::getAsBoolean;
   }
 
   private void configureOperatorControllerBindings(

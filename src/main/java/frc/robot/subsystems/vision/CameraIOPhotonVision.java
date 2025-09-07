@@ -2,6 +2,7 @@ package frc.robot.subsystems.vision;
 
 import edu.wpi.first.apriltag.AprilTagFieldLayout;
 import edu.wpi.first.math.geometry.Pose3d;
+import frc.robot.subsystems.vision.Camera.TrackedTarget;
 import frc.robot.subsystems.vision.VisionConstants.CameraConfig;
 import java.util.List;
 import java.util.Optional;
@@ -18,6 +19,8 @@ public class CameraIOPhotonVision implements CameraIO {
   private final PhotonPoseEstimator photonPoseEstimator;
 
   private final String cameraPositionTitle;
+
+  private List<PhotonTrackedTarget> latestTargets = List.of();
 
   public CameraIOPhotonVision(CameraConfig config) {
     this.cameraPositionTitle = config.cameraPosition();
@@ -76,8 +79,11 @@ public class CameraIOPhotonVision implements CameraIO {
     inputs.updatesReceived = pipelineResults.size();
 
     for (int i = 0; i < pipelineResults.size(); i++) {
+      PhotonPipelineResult pipelineResult = pipelineResults.get(i);
       Optional<EstimatedRobotPose> estimatedRobotPoseOptional =
-          photonPoseEstimator.update(pipelineResults.get(i));
+          photonPoseEstimator.update(pipelineResult);
+
+      this.latestTargets = pipelineResult.targets;
 
       if (estimatedRobotPoseOptional.isPresent()) {
 
@@ -104,6 +110,18 @@ public class CameraIOPhotonVision implements CameraIO {
     inputs.tagsUsed = tagsUsed;
     inputs.hasNewData = hasNewData;
     inputs.connected = camera.isConnected();
+  }
+
+  public List<TrackedTarget> getLatestTargets() {
+    return latestTargets.stream()
+        .map(
+            t ->
+                new TrackedTarget(
+                    t.getFiducialId(),
+                    t.getBestCameraToTarget(),
+                    photonPoseEstimator.getRobotToCameraTransform(),
+                    t.getPoseAmbiguity()))
+        .toList();
   }
 
   @Override

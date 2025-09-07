@@ -8,11 +8,14 @@ import edu.wpi.first.math.geometry.Pose3d;
 import edu.wpi.first.math.numbers.N1;
 import edu.wpi.first.math.numbers.N3;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
+import frc.robot.subsystems.vision.Camera.TrackedTarget;
 import frc.robot.subsystems.vision.Camera.VisionResult;
 import frc.robot.subsystems.vision.Camera.VisionResultStatus;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Comparator;
 import java.util.List;
+import java.util.Optional;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
@@ -145,6 +148,19 @@ public class AprilTagVision extends SubsystemBase {
   public void addVisionEstimateConsumer(
       Consumer<TimestampedRobotPoseEstimate> timestampRobotPoseEstimateConsumer) {
     timestampRobotPoseEstimateConsumers.add(timestampRobotPoseEstimateConsumer);
+  }
+
+  public Optional<TrackedTarget> getTransformToTag(int tagId) {
+    return Arrays.stream(cameras)
+        .map(Camera::getLatestTargets)
+        .flatMap(List::stream)
+        .filter(target -> target.id() == tagId)
+        .filter(TrackedTarget::isGoodPoseAmbiguity)
+        .min(Comparator.comparingDouble(TrackedTarget::poseAmbiguity));
+  }
+
+  public List<TrackedTarget> getAllVisibleTargets() {
+    return Arrays.stream(cameras).map(Camera::getLatestTargets).flatMap(List::stream).toList();
   }
 
   @Override

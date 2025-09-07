@@ -4,6 +4,7 @@ import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.DriverStation.Alliance;
 import edu.wpi.first.wpilibj.PWM;
 import edu.wpi.first.wpilibj.Timer;
+import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.subsystems.led.LEDConstants.FixedPalettePattern;
 import frc.robot.subsystems.led.LEDConstants.SolidColors;
@@ -15,6 +16,8 @@ import org.littletonrobotics.junction.Logger;
 public class LEDSubsystem extends SubsystemBase {
 
   private final Timer startupTimer = new Timer();
+
+  private boolean runDefaultAction = true;
 
   // In future, this could be an IO layer
   private class LEDStrip {
@@ -59,7 +62,7 @@ public class LEDSubsystem extends SubsystemBase {
 
     if (startupTimer.isRunning()) {
       applyAll(2125); // 5 volt mode
-    } else {
+    } else if (runDefaultAction) {
       alliance = DriverStation.getAlliance();
 
       if (DriverStation.isEStopped()) {
@@ -78,6 +81,10 @@ public class LEDSubsystem extends SubsystemBase {
     strips().forEach(LEDStrip::update);
 
     Logger.recordOutput("LED/pulses", strips().mapToInt(strip -> strip.pulse).toArray());
+  }
+
+  public void setRunDefaultAction(boolean runDefaultAction) {
+    this.runDefaultAction = runDefaultAction;
   }
 
   /**
@@ -120,6 +127,17 @@ public class LEDSubsystem extends SubsystemBase {
    */
   private void applyAll(int blue, int red, int backup) {
     applyAll(alliance.map(a -> a == Alliance.Blue ? blue : red).orElse(backup));
+  }
+
+  public Command runPattern(int pattern) { // This code is bad
+    return runEnd(
+        () -> {
+          runDefaultAction = false;
+          applyAll(pattern);
+        },
+        () -> {
+          runDefaultAction = true;
+        });
   }
 
   private Stream<LEDStrip> strips() {
