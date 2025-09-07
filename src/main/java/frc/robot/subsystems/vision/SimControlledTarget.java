@@ -24,6 +24,8 @@ public class SimControlledTarget extends VirtualSubsystem {
   private Pose3d tagPose;
   private final XboxController controller;
 
+  private boolean tagHidden = true;
+
   public SimControlledTarget(int tagID, Pose3d startingPose, XboxController controller) {
     this.tagId = tagID;
     this.controller = controller;
@@ -32,6 +34,8 @@ public class SimControlledTarget extends VirtualSubsystem {
 
   @Override
   public void periodic() {
+
+    tagHidden = controller.getAButton();
 
     tagPose =
         new Pose3d(
@@ -58,13 +62,14 @@ public class SimControlledTarget extends VirtualSubsystem {
                     - (controller.getPOV() == 180 ? BUTTON_ROTATION_SPEED : 0)));
 
     Logger.recordOutput("SimControlledTarget/TagPose", tagPose);
+    Logger.recordOutput("SimControlledTarget/VisibleTags", tagHidden ? new Pose3d[] {} : new Pose3d[] {tagPose});
 
     Logger.recordOutput("SimControlledTarget/TagId", tagId);
   }
 
   public AprilTagFieldLayout makeField() {
     return new AprilTagFieldLayout(
-        List.of(new AprilTag(tagId, tagPose)),
+        tagHidden ? List.of() : List.of(new AprilTag(tagId, tagPose)),
         FieldConstants.fieldLength,
         FieldConstants.fieldWidth);
   }
