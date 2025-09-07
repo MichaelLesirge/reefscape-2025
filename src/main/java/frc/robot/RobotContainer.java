@@ -6,7 +6,9 @@ import com.pathplanner.lib.auto.AutoBuilder;
 import com.pathplanner.lib.auto.NamedCommands;
 import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.geometry.Pose2d;
+import edu.wpi.first.math.geometry.Pose3d;
 import edu.wpi.first.math.geometry.Rotation2d;
+import edu.wpi.first.math.geometry.Rotation3d;
 import edu.wpi.first.math.geometry.Transform2d;
 import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
@@ -16,6 +18,7 @@ import edu.wpi.first.wpilibj.Alert.AlertType;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.GenericHID.RumbleType;
 import edu.wpi.first.wpilibj.RobotBase;
+import edu.wpi.first.wpilibj.XboxController;
 import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
@@ -25,6 +28,7 @@ import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import edu.wpi.first.wpilibj2.command.button.RobotModeTriggers;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
 import frc.robot.Constants.Mode;
+import frc.robot.Constants.RobotType;
 import frc.robot.commands.AdaptiveAutoAlignCommands;
 import frc.robot.commands.DriveCommands;
 import frc.robot.commands.ManualAlignCommands;
@@ -73,6 +77,7 @@ import frc.robot.subsystems.superstructure.wrist.WristIOSim;
 import frc.robot.subsystems.vision.AprilTagVision;
 import frc.robot.subsystems.vision.CameraIOPhotonVision;
 import frc.robot.subsystems.vision.CameraIOSim;
+import frc.robot.subsystems.vision.SimControlledTarget;
 import frc.robot.subsystems.vision.VisionConstants;
 import frc.robot.subsystems.visualizer.ObjectVisualizer;
 import frc.robot.utility.Elastic;
@@ -99,7 +104,9 @@ public class RobotContainer {
   private final Drive drive;
 
   private final AprilTagVision vision;
-  private final TargetFollowingVisualizer targetFollowing;
+
+  private TargetFollowingVisualizer targetFollowing;
+  private SimControlledTarget simulatedTarget;
 
   private final Superstructure superstructure;
   private final Elevator elevator;
@@ -254,7 +261,21 @@ public class RobotContainer {
           });
     }
 
-    targetFollowing = new TargetFollowingVisualizer(vision, drive::getRobotPose);
+    if (Constants.VISION_DEMO_TESTING_MODE) {
+      targetFollowing = new TargetFollowingVisualizer(vision, drive::getRobotPose);
+      if (Constants.getRobot() == RobotType.SIM_BOT) {
+        XboxController simTagController = new XboxController(3);
+        final int tagToFollow = 1;
+        final Pose3d startingPose =
+            new Pose3d(
+                FieldConstants.fieldLength / 2.0,
+                FieldConstants.fieldWidth / 2.0,
+                1.0,
+                Rotation3d.kZero);
+        simulatedTarget = new SimControlledTarget(tagToFollow, startingPose, simTagController);
+        vision.setFieldSupplier(simulatedTarget::makeField);
+      }
+    }
 
     coralSimulator = new ObjectVisualizer("Coral", drive::getRobotPose, superstructure::getEndPose);
 
@@ -323,7 +344,7 @@ public class RobotContainer {
 
     if (Constants.VISION_DEMO_TESTING_MODE) {
       final String tagToFollowKey = "Tag To Follow";
-      final int tagToFollowDefault = 1;
+      final int tagToFollowDefault = simulatedTarget != null ? simulatedTarget.getTagId() : 1;
 
       SmartDashboard.putNumber(tagToFollowKey, tagToFollowDefault);
       final IntSupplier tagToFollow =

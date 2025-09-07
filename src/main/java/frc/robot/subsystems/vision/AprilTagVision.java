@@ -1,5 +1,6 @@
 package frc.robot.subsystems.vision;
 
+import edu.wpi.first.apriltag.AprilTagFieldLayout;
 import edu.wpi.first.math.Matrix;
 import edu.wpi.first.math.filter.Debouncer;
 import edu.wpi.first.math.filter.Debouncer.DebounceType;
@@ -35,8 +36,14 @@ public class AprilTagVision extends SubsystemBase {
 
   private boolean hasVisionEstimate = false;
 
+  private Supplier<AprilTagFieldLayout> fieldSupplier = null;
+
   public AprilTagVision(CameraIO... camerasIO) {
     this.cameras = Arrays.stream(camerasIO).map(io -> new Camera(io)).toArray(Camera[]::new);
+
+    for (Camera camera : cameras) {
+      camera.setField(VisionConstants.FIELD);
+    }
   }
 
   @Override
@@ -118,6 +125,12 @@ public class AprilTagVision extends SubsystemBase {
       Logger.recordOutput(root + "/robotPosesRejected", robotPosesRejected.toArray(Pose3d[]::new));
       Logger.recordOutput(root + "/tagPoses", tagPoses.toArray(Pose3d[]::new));
     }
+
+    if (fieldSupplier != null) {
+      for (Camera camera : cameras) {
+        camera.setField(fieldSupplier.get());
+      }
+    }
   }
 
   /** Get whether or not the vision system has a valid estimate */
@@ -127,6 +140,14 @@ public class AprilTagVision extends SubsystemBase {
 
   public boolean hasVisionEstimateDebounce() {
     return debouncer.calculate(hasVisionEstimate);
+  }
+
+  public void setFieldSupplier(Supplier<AprilTagFieldLayout> fieldSupplier) {
+    this.fieldSupplier = fieldSupplier;
+  }
+
+  public void clearFieldSupplier() {
+    this.fieldSupplier = null;
   }
 
   /**

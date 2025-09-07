@@ -1,5 +1,6 @@
 package frc.robot.subsystems.vision;
 
+import edu.wpi.first.apriltag.AprilTagFieldLayout;
 import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.Matrix;
 import edu.wpi.first.math.VecBuilder;
@@ -70,12 +71,13 @@ public class Camera {
   public Camera(CameraIO io) {
     this.io = io;
 
-    io.setAprilTagFieldLayout(VisionConstants.FIELD);
-    this.tagsIdsOnField =
-        VisionConstants.FIELD.getTags().stream().map((tag) -> tag.ID).collect(Collectors.toSet());
-
     this.missingCameraAlert =
         new Alert(String.format("Missing cameras %s", getCameraName()), Alert.AlertType.kWarning);
+  }
+
+  public void setField(AprilTagFieldLayout field) {
+    io.setAprilTagFieldLayout(field);
+    this.tagsIdsOnField = field.getTags().stream().map((tag) -> tag.ID).collect(Collectors.toSet());
   }
 
   /** Get name of camera as specified by IO */
