@@ -1,6 +1,7 @@
 package frc.robot.commands.tagFollowing;
 
 import edu.wpi.first.math.MathUtil;
+import edu.wpi.first.math.filter.MedianFilter;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Pose3d;
 import edu.wpi.first.math.geometry.Rotation2d;
@@ -15,6 +16,8 @@ import frc.robot.Constants;
 import frc.robot.commands.controllers.SimpleDriveController;
 import frc.robot.subsystems.drive.Drive;
 import frc.robot.subsystems.drive.DriveConstants;
+import frc.robot.subsystems.superstructure.elevator.Elevator;
+import frc.robot.subsystems.superstructure.wrist.Wrist;
 import frc.robot.subsystems.vision.AprilTagVision;
 import java.util.function.IntSupplier;
 import java.util.function.Supplier;
@@ -29,11 +32,16 @@ public class FollowTag extends Command {
   private static final Pose2d TOLERANCE =
       new Pose2d(Units.inchesToMeters(6), Units.inchesToMeters(3), Rotation2d.fromDegrees(6));
 
+  private static final int SUPERSTRUCTURE_MEDIAN_FILTER_SIZE = 5;
+
   private static final double FILTER_SLEW_RATE = Units.feetToMeters(5);
   private static final double MAX_TAG_JUMP = Units.feetToMeters(1);
 
   private final Drive drive;
   private final AprilTagVision vision;
+
+  private final Elevator elevator;
+  private final Wrist wrist;
 
   private final IntSupplier tagToFollow;
 
@@ -43,10 +51,19 @@ public class FollowTag extends Command {
 
   private Translation3d tagFilteredPosition = Translation3d.kZero;
 
+  private final MedianFilter elevatorHeightFilter = new MedianFilter(SUPERSTRUCTURE_MEDIAN_FILTER_SIZE);
+  private final MedianFilter wristAngleFilter = new MedianFilter(SUPERSTRUCTURE_MEDIAN_FILTER_SIZE);
+
   public FollowTag(AprilTagVision vision, Drive drive, IntSupplier tagToFollow) {
+    this(vision, drive, tagToFollow, null, null);
+  }
+
+  public FollowTag(AprilTagVision vision, Drive drive, IntSupplier tagToFollow, Elevator elevator, Wrist wrist) {
     this.vision = vision;
     this.drive = drive;
     this.tagToFollow = tagToFollow;
+    this.elevator = elevator;
+    this.wrist = wrist;
 
     this.controller = new SimpleDriveController();
 
@@ -118,6 +135,14 @@ public class FollowTag extends Command {
                 controller.setSetpoint(
                     target.plus(
                         new Transform2d(drivingTranslationSupplier.get().unaryMinus().div(DriveConstants.DRIVE_CONFIG.maxLinearVelocity()), Rotation2d.kZero)));
+
+                if (elevator != null && wrist != null) {
+                  TagFollowingUtil.TagFollowingSuperstructureState state =
+                      TagFollowingUtil.getSuperstructureState(tagPose);
+                  elevator.setGoalHeightMeters(
+                      elevatorHeightFilter.calculate(state.elevatorHeight()));
+                  wrist.setGoalRotation(new Rotation2d(wristAngleFilter.calculate(state.wristAngle().getRadians())));
+                }
               }
             });
 

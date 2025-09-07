@@ -326,7 +326,7 @@ public class RobotContainer {
       final int tagToFollowDefault = 1;
 
       SmartDashboard.putNumber(tagToFollowKey, tagToFollowDefault);
-      IntSupplier tagToFollow =
+      final IntSupplier tagToFollow =
           () -> (int) SmartDashboard.getNumber(tagToFollowKey, tagToFollowDefault);
 
       targetFollowing.setTagToFollow(tagToFollow);
@@ -340,6 +340,16 @@ public class RobotContainer {
       dashboard.addCommand(
           "Follow Tag",
           new FollowTag(vision, drive, tagToFollow)
+              .raceWith(ledSubsystem.runPattern(LEDConstants.FixedPalettePattern.Strobe.GOLD)));
+
+      dashboard.addCommand(
+          "Aim At Tag Superstructure",
+          new AimAtTag(vision, drive, tagToFollow, elevator, coralWrist)
+              .raceWith(ledSubsystem.runPattern(LEDConstants.FixedPalettePattern.Strobe.WHITE)));
+
+      dashboard.addCommand(
+          "Follow Tag Superstructure",
+          new FollowTag(vision, drive, tagToFollow, elevator, coralWrist)
               .raceWith(ledSubsystem.runPattern(LEDConstants.FixedPalettePattern.Strobe.GOLD)));
     }
   }
