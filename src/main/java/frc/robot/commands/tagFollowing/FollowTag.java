@@ -91,9 +91,6 @@ public class FollowTag extends Command {
                       .plus(new Transform2d(TARGET_OFFSET, Rotation2d.kZero))
                       .getTranslation();
 
-              Logger.recordOutput("TagFollowing/FollowedTag", tagPose);
-              Logger.recordOutput("TagFollowing/UsedCamera", cameraPose);
-
               SmartDashboard.putNumber(
                   "Target Heading", ((-targetRotation.getDegrees() + 360) % 360));
 

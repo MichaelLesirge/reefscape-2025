@@ -32,6 +32,7 @@ import frc.robot.commands.controllers.JoystickInputController;
 import frc.robot.commands.controllers.SpeedLevelController;
 import frc.robot.commands.tagFollowing.AimAtTag;
 import frc.robot.commands.tagFollowing.FollowTag;
+import frc.robot.commands.tagFollowing.TargetFollowing;
 import frc.robot.subsystems.dashboard.DriverDashboard;
 import frc.robot.subsystems.drive.Drive;
 import frc.robot.subsystems.drive.DriveConstants;
@@ -96,7 +97,9 @@ public class RobotContainer {
 
   // Subsystems
   private final Drive drive;
+
   private final AprilTagVision vision;
+  private final TargetFollowing targetFollowing;
 
   private final Superstructure superstructure;
   private final Elevator elevator;
@@ -251,6 +254,8 @@ public class RobotContainer {
           });
     }
 
+    targetFollowing = new TargetFollowing(vision, drive::getRobotPose);
+
     coralSimulator = new ObjectVisualizer("Coral", drive::getRobotPose, superstructure::getEndPose);
 
     sensor.setSimulationSource(coralSimulator::isHolding);
@@ -324,8 +329,9 @@ public class RobotContainer {
       IntSupplier tagToFollow =
           () -> (int) SmartDashboard.getNumber(tagToFollowKey, tagToFollowDefault);
 
-      dashboard.setHasVisionEstimateSupplier(
-          () -> vision.getTransformToTag(tagToFollow.getAsInt()).isPresent());
+      
+      targetFollowing.setTagToFollow(tagToFollow);
+      dashboard.setHasVisionEstimateSupplier(targetFollowing::hasTagInView);
 
       dashboard.addCommand(
           "Aim At Tag",

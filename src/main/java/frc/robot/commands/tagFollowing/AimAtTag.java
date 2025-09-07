@@ -10,7 +10,6 @@ import edu.wpi.first.wpilibj2.command.Command;
 import frc.robot.commands.controllers.HeadingController;
 import frc.robot.subsystems.drive.Drive;
 import frc.robot.subsystems.vision.AprilTagVision;
-import frc.robot.subsystems.vision.Camera.TrackedTarget;
 import java.util.function.BooleanSupplier;
 import java.util.function.IntSupplier;
 import java.util.function.Supplier;
@@ -54,7 +53,6 @@ public class AimAtTag extends Command {
   public void execute() {
     vision
         .getTransformToTag(tagToFollow.getAsInt())
-        .filter(TrackedTarget::isGoodPoseAmbiguity)
         .ifPresent(
             t -> {
               Pose3d robotPose = TagFollowingUtil.toPose3d(drive.getRobotPose());
@@ -72,9 +70,6 @@ public class AimAtTag extends Command {
                       .plus(TARGET_HEADING_OFFSET);
 
               Logger.recordOutput("TagFollowing/Aim/TargetHeading", targetHeading.getDegrees());
-
-              Logger.recordOutput("TagFollowing/FollowedTag", tagPose);
-              Logger.recordOutput("TagFollowing/UsedCamera", cameraPose);
 
               Rotation2d meanTargetHeading =
                   new Rotation2d(targetHeadingFilter.calculate(targetHeading.getRadians()));
