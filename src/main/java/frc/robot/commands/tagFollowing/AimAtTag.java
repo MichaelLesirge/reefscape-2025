@@ -80,7 +80,7 @@ public class AimAtTag extends Command {
               headingController.setGoal(meanTargetHeading);
             });
 
-    Translation2d drivingTranslation = drivingTranslationSupplier.get();
+    Translation2d drivingTranslation = drivingTranslationSupplier.get().times(0.25);
     drive.setRobotSpeeds(
         new ChassisSpeeds(
             drivingTranslation.getX(), drivingTranslation.getY(), headingController.calculate()),

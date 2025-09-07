@@ -14,11 +14,15 @@ import edu.wpi.first.wpilibj2.command.Command;
 import frc.robot.Constants;
 import frc.robot.commands.controllers.SimpleDriveController;
 import frc.robot.subsystems.drive.Drive;
+import frc.robot.subsystems.drive.DriveConstants;
 import frc.robot.subsystems.vision.AprilTagVision;
 import java.util.function.IntSupplier;
+import java.util.function.Supplier;
 import org.littletonrobotics.junction.Logger;
 
 public class FollowTag extends Command {
+
+  public static Supplier<Translation2d> drivingTranslationSupplier = () -> Translation2d.kZero;
 
   private static final Rotation2d TARGET_HEADING_OFFSET = Rotation2d.k180deg;
   private static final Translation2d TARGET_OFFSET = new Translation2d(2, 0);
@@ -34,6 +38,8 @@ public class FollowTag extends Command {
   private final IntSupplier tagToFollow;
 
   private final SimpleDriveController controller;
+
+  private Translation2d targetOffset;
 
   private Translation3d tagFilteredPosition = Translation3d.kZero;
 
@@ -52,6 +58,8 @@ public class FollowTag extends Command {
   @Override
   public void initialize() {
     Pose2d robotPose = drive.getRobotPose();
+
+    targetOffset = TARGET_OFFSET;
 
     controller.reset(robotPose);
     controller.setSetpoint(robotPose);
@@ -88,7 +96,7 @@ public class FollowTag extends Command {
               Translation2d targetTranslation =
                   tagPose
                       .toPose2d()
-                      .plus(new Transform2d(TARGET_OFFSET, Rotation2d.kZero))
+                      .plus(new Transform2d(targetOffset, Rotation2d.kZero))
                       .getTranslation();
 
               SmartDashboard.putNumber(
@@ -104,9 +112,12 @@ public class FollowTag extends Command {
               Logger.recordOutput(
                   "TagFollowing/Follow/TagFilteredPosition",
                   new Pose3d(this.tagFilteredPosition, tagPose.getRotation()));
+              Logger.recordOutput("TagFollowing/Follow/RawTargetPosition", target);
 
               if (withinMaxJump) {
-                controller.setSetpoint(target);
+                controller.setSetpoint(
+                    target.plus(
+                        new Transform2d(drivingTranslationSupplier.get().unaryMinus().div(DriveConstants.DRIVE_CONFIG.maxLinearVelocity()), Rotation2d.kZero)));
               }
             });
 

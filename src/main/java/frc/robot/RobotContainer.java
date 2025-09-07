@@ -32,7 +32,7 @@ import frc.robot.commands.controllers.JoystickInputController;
 import frc.robot.commands.controllers.SpeedLevelController;
 import frc.robot.commands.tagFollowing.AimAtTag;
 import frc.robot.commands.tagFollowing.FollowTag;
-import frc.robot.commands.tagFollowing.TargetFollowing;
+import frc.robot.commands.tagFollowing.TargetFollowingVisualizer;
 import frc.robot.subsystems.dashboard.DriverDashboard;
 import frc.robot.subsystems.drive.Drive;
 import frc.robot.subsystems.drive.DriveConstants;
@@ -99,7 +99,7 @@ public class RobotContainer {
   private final Drive drive;
 
   private final AprilTagVision vision;
-  private final TargetFollowing targetFollowing;
+  private final TargetFollowingVisualizer targetFollowing;
 
   private final Superstructure superstructure;
   private final Elevator elevator;
@@ -254,7 +254,7 @@ public class RobotContainer {
           });
     }
 
-    targetFollowing = new TargetFollowing(vision, drive::getRobotPose);
+    targetFollowing = new TargetFollowingVisualizer(vision, drive::getRobotPose);
 
     coralSimulator = new ObjectVisualizer("Coral", drive::getRobotPose, superstructure::getEndPose);
 
@@ -329,7 +329,6 @@ public class RobotContainer {
       IntSupplier tagToFollow =
           () -> (int) SmartDashboard.getNumber(tagToFollowKey, tagToFollowDefault);
 
-      
       targetFollowing.setTagToFollow(tagToFollow);
       dashboard.setHasVisionEstimateSupplier(targetFollowing::hasTagInView);
 
@@ -523,6 +522,7 @@ public class RobotContainer {
 
     AimAtTag.drivingTranslationSupplier = input::getTranslationMetersPerSecond;
     AimAtTag.fieldRelativeDrivingSupplier = useFieldRelative::getAsBoolean;
+    FollowTag.drivingTranslationSupplier = input::getTranslationMetersPerSecond;
   }
 
   private void configureOperatorControllerBindings(
