@@ -1,6 +1,7 @@
 package frc.robot.commands.tagFollowing;
 
 import edu.wpi.first.math.MathUtil;
+import edu.wpi.first.math.filter.Debouncer;
 import edu.wpi.first.math.filter.MedianFilter;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Pose3d;
@@ -54,6 +55,8 @@ public class FollowTag extends Command {
   private final MedianFilter elevatorHeightFilter =
       new MedianFilter(SUPERSTRUCTURE_MEDIAN_FILTER_SIZE);
   private final MedianFilter wristAngleFilter = new MedianFilter(SUPERSTRUCTURE_MEDIAN_FILTER_SIZE);
+
+  private final Debouncer atGoalDebouncer = new Debouncer(0.2);
 
   public FollowTag(AprilTagVision vision, Drive drive, IntSupplier tagToFollow) {
     this(vision, drive, tagToFollow, null, null);
@@ -155,8 +158,8 @@ public class FollowTag extends Command {
             });
 
     ChassisSpeeds speeds = controller.calculate(drive.getRobotPose());
-    if (controller.atReference()) {
-      speeds = new ChassisSpeeds(0, 0, 0);
+    if (atGoalDebouncer.calculate(controller.atReference())) {
+      speeds = new ChassisSpeeds();
     }
     drive.setRobotSpeeds(speeds);
   }

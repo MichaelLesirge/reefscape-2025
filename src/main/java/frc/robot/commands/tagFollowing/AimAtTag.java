@@ -1,5 +1,6 @@
 package frc.robot.commands.tagFollowing;
 
+import edu.wpi.first.math.filter.Debouncer;
 import edu.wpi.first.math.filter.MedianFilter;
 import edu.wpi.first.math.geometry.Pose3d;
 import edu.wpi.first.math.geometry.Rotation2d;
@@ -26,7 +27,7 @@ public class AimAtTag extends Command {
   private static final Rotation2d TARGET_HEADING_OFFSET = Rotation2d.k180deg;
   private static final int MEDIAN_FILTER_SIZE = 10;
 
-  private static final int SUPERSTRUCTURE_MEDIAN_FILTER_SIZE = 5;
+  private static final int SUPERSTRUCTURE_MEDIAN_FILTER_SIZE = 15;
 
   private final Drive drive;
   private final AprilTagVision vision;
@@ -42,6 +43,8 @@ public class AimAtTag extends Command {
   private final MedianFilter elevatorHeightFilter =
       new MedianFilter(SUPERSTRUCTURE_MEDIAN_FILTER_SIZE);
   private final MedianFilter wristAngleFilter = new MedianFilter(SUPERSTRUCTURE_MEDIAN_FILTER_SIZE);
+
+  private final Debouncer atGoalDebouncer = new Debouncer(0.2);
 
   public AimAtTag(AprilTagVision vision, Drive drive, IntSupplier tagToFollow) {
     this(vision, drive, tagToFollow, null, null);
@@ -108,10 +111,18 @@ public class AimAtTag extends Command {
             });
 
     Translation2d drivingTranslation = drivingTranslationSupplier.get().times(0.25);
-    drive.setRobotSpeeds(
+
+    ChassisSpeeds speeds =
         new ChassisSpeeds(
-            drivingTranslation.getX(), drivingTranslation.getY(), headingController.calculate()),
-        fieldRelativeDrivingSupplier.getAsBoolean());
+            drivingTranslation.getX(),
+            drivingTranslation.getY(),
+            headingController.calculate());
+
+    if (atGoalDebouncer.calculate(headingController.atGoal())) {
+      speeds.omegaRadiansPerSecond = 0;
+    }
+
+    drive.setRobotSpeeds(speeds, fieldRelativeDrivingSupplier.getAsBoolean());
   }
 
   @Override
