@@ -529,9 +529,9 @@
           {
             "title": "Alerts",
             "x": 1024.0,
-            "y": 0.0,
+            "y": 128.0,
             "width": 256.0,
-            "height": 576.0,
+            "height": 384.0,
             "type": "Alerts",
             "properties": {
               "topic": "/SmartDashboard/Alerts",
@@ -543,35 +543,32 @@
             "x": 768.0,
             "y": 0.0,
             "width": 256.0,
-            "height": 320.0,
+            "height": 256.0,
             "type": "Camera Stream",
             "properties": {
               "topic": "/CameraPublisher/FrontRight8032-processed",
               "period": 0.06,
-              "rotation_turns": 0,
-              "resolution": [
-                0.0,
-                0.0
-              ]
+              "rotation_turns": 0
             }
           },
           {
             "title": "BackRightCamera8032-processed",
             "x": 768.0,
-            "y": 320.0,
+            "y": 256.0,
             "width": 256.0,
             "height": 256.0,
             "type": "Camera Stream",
             "properties": {
               "topic": "/CameraPublisher/BackRightCamera8032-processed",
               "period": 0.06,
-              "rotation_turns": 0
+              "rotation_turns": 0,
+              "compression": 9
             }
           },
           {
             "title": "jarreaucam-processed",
             "x": 512.0,
-            "y": 320.0,
+            "y": 256.0,
             "width": 256.0,
             "height": 256.0,
             "type": "Camera Stream",
@@ -587,7 +584,7 @@
             "x": 512.0,
             "y": 0.0,
             "width": 256.0,
-            "height": 320.0,
+            "height": 256.0,
             "type": "Camera Stream",
             "properties": {
               "topic": "/CameraPublisher/plzwork-processed",
@@ -599,7 +596,7 @@
           {
             "title": "Heading Degrees",
             "x": 256.0,
-            "y": 0.0,
+            "y": 256.0,
             "width": 256.0,
             "height": 256.0,
             "type": "Radial Gauge",
@@ -615,19 +612,6 @@
               "wrap_value": true,
               "show_pointer": true,
               "show_ticks": true
-            }
-          },
-          {
-            "title": "Reset Rotation",
-            "x": 0.0,
-            "y": 384.0,
-            "width": 256.0,
-            "height": 128.0,
-            "type": "Command",
-            "properties": {
-              "topic": "/SmartDashboard/Reset Rotation",
-              "period": 0.06,
-              "show_type": false
             }
           },
           {
@@ -662,24 +646,77 @@
             }
           },
           {
-            "title": "Target Heading",
+            "title": "Reset To Center",
             "x": 256.0,
-            "y": 256.0,
+            "y": 0.0,
             "width": 256.0,
-            "height": 256.0,
-            "type": "Radial Gauge",
+            "height": 128.0,
+            "type": "Command",
             "properties": {
-              "topic": "/SmartDashboard/Target Heading",
-              "period": 0.033,
+              "topic": "/SmartDashboard/Reset To Center",
+              "period": 0.06,
+              "show_type": false
+            }
+          },
+          {
+            "title": "Reset Rotation",
+            "x": 256.0,
+            "y": 128.0,
+            "width": 256.0,
+            "height": 128.0,
+            "type": "Command",
+            "properties": {
+              "topic": "/SmartDashboard/Reset Rotation",
+              "period": 0.06,
+              "show_type": false
+            }
+          },
+          {
+            "title": "CommsDisableCount",
+            "x": 1024.0,
+            "y": 0.0,
+            "width": 128.0,
+            "height": 128.0,
+            "type": "Large Text Display",
+            "properties": {
+              "topic": "/AdvantageKit/SystemStats/CommsDisableCount",
+              "period": 0.06,
+              "data_type": "int"
+            }
+          },
+          {
+            "title": "BatteryVoltage",
+            "x": 0.0,
+            "y": 384.0,
+            "width": 256.0,
+            "height": 128.0,
+            "type": "Voltage View",
+            "properties": {
+              "topic": "/AdvantageKit/SystemStats/BatteryVoltage",
+              "period": 0.06,
               "data_type": "double",
-              "start_angle": 0.0,
-              "end_angle": 360.0,
-              "min_value": 0.0,
-              "max_value": 360.0,
-              "number_of_labels": 8,
-              "wrap_value": false,
-              "show_pointer": true,
-              "show_ticks": true
+              "min_value": 4.0,
+              "max_value": 13.0,
+              "divisions": 5,
+              "inverted": false,
+              "orientation": "horizontal"
+            }
+          },
+          {
+            "title": "BrownedOut",
+            "x": 1152.0,
+            "y": 0.0,
+            "width": 128.0,
+            "height": 128.0,
+            "type": "Boolean Box",
+            "properties": {
+              "topic": "/AdvantageKit/SystemStats/BrownedOut",
+              "period": 0.06,
+              "data_type": "boolean",
+              "true_color": 4283215696,
+              "false_color": 4294198070,
+              "true_icon": "None",
+              "false_icon": "None"
             }
           }
         ]

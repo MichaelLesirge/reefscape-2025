@@ -342,6 +342,17 @@ public class RobotContainer {
                         DRIVE_CONFIG.bumperCornerToCorner().getX() / 2, 0, Rotation2d.kPi))),
         true);
 
+    dashboard.addCommand(
+        "Reset To Center",
+        () ->
+            drive.resetPose(
+                new Pose2d(
+                        FieldConstants.fieldLength,
+                        FieldConstants.fieldWidth,
+                        drive.getRobotPose().getRotation())
+                    .div(2)),
+        true);
+
     if (Constants.VISION_DEMO_TESTING_MODE) {
       final String tagToFollowKey = "Tag To Follow";
       final int tagToFollowDefault = simulatedTarget != null ? simulatedTarget.getTagId() : 1;
