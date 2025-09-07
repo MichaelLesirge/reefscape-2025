@@ -16,12 +16,14 @@ public class TagFollowingUtil {
         pose.getX(), pose.getY(), 0, new Rotation3d(0, 0, pose.getRotation().getRadians()));
   }
 
-  public record TagFollowingSuperstructureState(double elevatorHeight, Rotation2d wristAngle) {
-  }
+  public record TagFollowingSuperstructureState(double elevatorHeight, Rotation2d wristAngle) {}
 
   public static TagFollowingSuperstructureState getSuperstructureState(Pose3d tagPose) {
     final Rotation2d wristAngle = new Rotation2d(tagPose.getRotation().getY());
-    final double elevatorHeight = tagPose.getTranslation().getZ() - WRIST_LENGTH * wristAngle.getSin() - ELEVATOR_HEIGHT_OFF_GROUND;
+    final double elevatorHeight =
+        tagPose.getTranslation().getZ()
+            - WRIST_LENGTH * wristAngle.getSin()
+            - ELEVATOR_HEIGHT_OFF_GROUND;
     return new TagFollowingSuperstructureState(elevatorHeight, wristAngle);
   }
 }

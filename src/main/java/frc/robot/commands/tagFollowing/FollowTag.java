@@ -51,14 +51,16 @@ public class FollowTag extends Command {
 
   private Translation3d tagFilteredPosition = Translation3d.kZero;
 
-  private final MedianFilter elevatorHeightFilter = new MedianFilter(SUPERSTRUCTURE_MEDIAN_FILTER_SIZE);
+  private final MedianFilter elevatorHeightFilter =
+      new MedianFilter(SUPERSTRUCTURE_MEDIAN_FILTER_SIZE);
   private final MedianFilter wristAngleFilter = new MedianFilter(SUPERSTRUCTURE_MEDIAN_FILTER_SIZE);
 
   public FollowTag(AprilTagVision vision, Drive drive, IntSupplier tagToFollow) {
     this(vision, drive, tagToFollow, null, null);
   }
 
-  public FollowTag(AprilTagVision vision, Drive drive, IntSupplier tagToFollow, Elevator elevator, Wrist wrist) {
+  public FollowTag(
+      AprilTagVision vision, Drive drive, IntSupplier tagToFollow, Elevator elevator, Wrist wrist) {
     this.vision = vision;
     this.drive = drive;
     this.tagToFollow = tagToFollow;
@@ -134,14 +136,20 @@ public class FollowTag extends Command {
               if (withinMaxJump) {
                 controller.setSetpoint(
                     target.plus(
-                        new Transform2d(drivingTranslationSupplier.get().unaryMinus().div(DriveConstants.DRIVE_CONFIG.maxLinearVelocity()), Rotation2d.kZero)));
+                        new Transform2d(
+                            drivingTranslationSupplier
+                                .get()
+                                .unaryMinus()
+                                .div(DriveConstants.DRIVE_CONFIG.maxLinearVelocity()),
+                            Rotation2d.kZero)));
 
                 if (elevator != null && wrist != null) {
                   TagFollowingUtil.TagFollowingSuperstructureState state =
                       TagFollowingUtil.getSuperstructureState(tagPose);
                   elevator.setGoalHeightMeters(
                       elevatorHeightFilter.calculate(state.elevatorHeight()));
-                  wrist.setGoalRotation(new Rotation2d(wristAngleFilter.calculate(state.wristAngle().getRadians())));
+                  wrist.setGoalRotation(
+                      new Rotation2d(wristAngleFilter.calculate(state.wristAngle().getRadians())));
                 }
               }
             });

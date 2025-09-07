@@ -8,7 +8,6 @@ import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import frc.robot.commands.controllers.HeadingController;
-import frc.robot.commands.tagFollowing.TagFollowingUtil.TagFollowingSuperstructureState;
 import frc.robot.subsystems.drive.Drive;
 import frc.robot.subsystems.superstructure.elevator.Elevator;
 import frc.robot.subsystems.superstructure.wrist.Wrist;
@@ -40,15 +39,16 @@ public class AimAtTag extends Command {
   private final MedianFilter targetHeadingFilter = new MedianFilter(MEDIAN_FILTER_SIZE);
   private final HeadingController headingController;
 
-  private final MedianFilter elevatorHeightFilter = new MedianFilter(SUPERSTRUCTURE_MEDIAN_FILTER_SIZE);
+  private final MedianFilter elevatorHeightFilter =
+      new MedianFilter(SUPERSTRUCTURE_MEDIAN_FILTER_SIZE);
   private final MedianFilter wristAngleFilter = new MedianFilter(SUPERSTRUCTURE_MEDIAN_FILTER_SIZE);
-
 
   public AimAtTag(AprilTagVision vision, Drive drive, IntSupplier tagToFollow) {
     this(vision, drive, tagToFollow, null, null);
   }
 
-  public AimAtTag(AprilTagVision vision, Drive drive, IntSupplier tagToFollow, Elevator elevator, Wrist wrist) {
+  public AimAtTag(
+      AprilTagVision vision, Drive drive, IntSupplier tagToFollow, Elevator elevator, Wrist wrist) {
     this.vision = vision;
     this.drive = drive;
     this.tagToFollow = tagToFollow;
@@ -95,13 +95,14 @@ public class AimAtTag extends Command {
               SmartDashboard.putNumber(
                   "Target Heading", ((-targetHeading.getDegrees() + 360) % 360));
 
-                  if (elevator != null && wrist != null) {
-                    TagFollowingUtil.TagFollowingSuperstructureState state =
-                        TagFollowingUtil.getSuperstructureState(tagPose);
-                    elevator.setGoalHeightMeters(
-                        elevatorHeightFilter.calculate(state.elevatorHeight()));
-                    wrist.setGoalRotation(new Rotation2d(wristAngleFilter.calculate(state.wristAngle().getRadians())));
-                  }
+              if (elevator != null && wrist != null) {
+                TagFollowingUtil.TagFollowingSuperstructureState state =
+                    TagFollowingUtil.getSuperstructureState(tagPose);
+                elevator.setGoalHeightMeters(
+                    elevatorHeightFilter.calculate(state.elevatorHeight()));
+                wrist.setGoalRotation(
+                    new Rotation2d(wristAngleFilter.calculate(state.wristAngle().getRadians())));
+              }
 
               headingController.setGoal(meanTargetHeading);
             });
