@@ -56,13 +56,12 @@ public class SimControlledTarget extends VirtualSubsystem {
                     tagPose.getRotation().getY()
                         + JoystickUtil.applyDeadband(controller.getRightY()) * ROTATION_SPEED),
                 MathUtil.angleModulus(
-                        tagPose.getRotation().getZ()
-                            - JoystickUtil.applyDeadband(controller.getRightX()) * ROTATION_SPEED)
-                    + (controller.getPOV() == 0 ? BUTTON_ROTATION_SPEED : 0)
-                    - (controller.getPOV() == 180 ? BUTTON_ROTATION_SPEED : 0)));
+                    tagPose.getRotation().getZ()
+                        - JoystickUtil.applyDeadband(controller.getRightX()) * ROTATION_SPEED)));
 
     Logger.recordOutput("SimControlledTarget/TagPose", tagPose);
-    Logger.recordOutput("SimControlledTarget/VisibleTags", tagHidden ? new Pose3d[] {} : new Pose3d[] {tagPose});
+    Logger.recordOutput(
+        "SimControlledTarget/VisibleTags", tagHidden ? new Pose3d[] {} : new Pose3d[] {tagPose});
 
     Logger.recordOutput("SimControlledTarget/TagId", tagId);
   }

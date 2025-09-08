@@ -114,9 +114,7 @@ public class AimAtTag extends Command {
 
     ChassisSpeeds speeds =
         new ChassisSpeeds(
-            drivingTranslation.getX(),
-            drivingTranslation.getY(),
-            headingController.calculate());
+            drivingTranslation.getX(), drivingTranslation.getY(), headingController.calculate());
 
     if (atGoalDebouncer.calculate(headingController.atGoal())) {
       speeds.omegaRadiansPerSecond = 0;
