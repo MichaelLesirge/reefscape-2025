@@ -10,13 +10,7 @@
           "width": 370,
           "expanded": [
             "/RealOutputs",
-            "/Tuning",
-            "/RealOutputs/HeadingController",
-            "/Tuning/HeadingController",
-            "/RealOutputs/TagFollowing/Follow/TagFilteredPosition/translation",
-            "/RealOutputs/TagFollowing/Follow",
-            "/RealOutputs/TagFollowing/Aim",
-            "/RealOutputs/SimControlledTarget"
+            "/Tuning"
           ]
         },
         "tabs": {
@@ -180,20 +174,20 @@
                     "options": {}
                   },
                   {
-                    "type": "aprilTag",
-                    "logKey": "/RealOutputs/SimControlledTarget/TagPose",
-                    "logType": "Pose3d",
-                    "visible": true,
-                    "options": {
-                      "family": "36h11"
-                    }
-                  },
-                  {
                     "type": "axes",
                     "logKey": "/RealOutputs/SimControlledTarget/TagPose",
                     "logType": "Pose3d",
                     "visible": true,
                     "options": {}
+                  },
+                  {
+                    "type": "aprilTag",
+                    "logKey": "/RealOutputs/SimControlledTarget/VisibleTags",
+                    "logType": "Pose3d[]",
+                    "visible": true,
+                    "options": {
+                      "family": "36h11"
+                    }
                   }
                 ],
                 "game": "Evergreen",
@@ -204,14 +198,14 @@
                 "cameraIndex": -1,
                 "orbitFov": 50,
                 "cameraPosition": [
-                  6.8504129765938755,
-                  1.1654903692161722,
-                  1.0900769543693456
+                  3.969965780326588,
+                  1.3878725997964025,
+                  2.1401052782381225
                 ],
                 "cameraTarget": [
-                  5.8685323017477495,
-                  0.5374286731140911,
-                  -1.1879259148248789
+                  2.226546492240228,
+                  0.9974796499605574,
+                  0.4565077985653925
                 ]
               },
               "controlsHeight": 305
