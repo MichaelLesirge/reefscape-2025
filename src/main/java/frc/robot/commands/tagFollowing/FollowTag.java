@@ -38,6 +38,8 @@ public class FollowTag extends Command {
   private static final double FILTER_SLEW_RATE = Units.feetToMeters(5);
   private static final double MAX_TAG_JUMP = Units.feetToMeters(1);
 
+  private static final double MAX_ALLOWED_TAG_PITCH = Units.degreesToRadians(80);
+
   private final Drive drive;
   private final AprilTagVision vision;
 
@@ -129,14 +131,17 @@ public class FollowTag extends Command {
               double distance = tagFilteredPosition.getDistance(tagPose.getTranslation());
               boolean withinMaxJump = distance < MAX_TAG_JUMP;
 
+              boolean tagRotationGood = Math.abs(tagPose.getRotation().getY()) < MAX_ALLOWED_TAG_PITCH;
+
               Logger.recordOutput("TagFollowing/Follow/TagDistanceToSafe", distance);
               Logger.recordOutput("TagFollowing/Follow/WithinMaxJump", withinMaxJump);
               Logger.recordOutput(
                   "TagFollowing/Follow/TagFilteredPosition",
                   new Pose3d(this.tagFilteredPosition, tagPose.getRotation()));
               Logger.recordOutput("TagFollowing/Follow/RawTargetPosition", target);
+              Logger.recordOutput("TagFollowing/Follow/TagRotationGood", tagRotationGood);
 
-              if (withinMaxJump) {
+              if (withinMaxJump && tagRotationGood) {
                 controller.setSetpoint(
                     target.plus(
                         new Transform2d(
